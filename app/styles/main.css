@@ -1,0 +1,21 @@
+body {
+   padding-top: 20px;
+   padding-bottom: 20px;
+}
+
+.hl7-appointment
+{
+	width: 1000px;
+	margin: auto;
+}
+
+.appointments-calendar
+{
+	margin-top: 10px;
+	width: 100%;
+}
+
+.appointments-calendar table tr td > div
+{
+	min-height: 50px !important;
+}
