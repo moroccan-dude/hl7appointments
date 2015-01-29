@@ -37,3 +37,32 @@ body {
 	cursor: pointer;
 	margin-top: 3px;
 }
+
+.hl7-appointment .appointment-form
+{
+	padding-top: 0;
+}
+
+.hl7-appointment .appointment-form input
+{
+	display: inline-block;
+	width: auto;
+}
+
+.hl7-appointment .appointment-form input[type='text']
+{
+	width: 200px;
+}
+
+.hl7-appointment .appointment-form label
+{
+	font-weight: normal;
+	width: 150px;
+	font-size: 16px;
+}
+
+.hl7-appointment .appointment-form h4
+{
+	font-weight: normal;
+	display: inline-block;
+}

@@ -39,7 +39,7 @@ angular.module('hl7appointmentApp')
 				    $scope.showAppointmentForm();
 				},
 				dayClick: function( date, jsEvent, view ) {
-					$scope.showNewAppointmentForm();
+					$scope.showNewAppointmentForm( date );
 			    },
 				viewRender: function(view, element ){ //need to refresh eventSources when doing prev/next month
 					if( !$scope.sales ) return;
@@ -47,12 +47,20 @@ angular.module('hl7appointmentApp')
 					buildSalesEvents();
 				}
 		 };
+		 
+	   $scope.getDefaultDatepickerOptions = function( htmlElement ){
+		   var options = {
+			  dateFormat: 'yy-mm-dd'
+		   };
+
+		   return options;
+	   };		 
 
 	  	 $scope.showAppointmentForm = function(){
 	  		   $scope.appointmentFormVisible = true;
 	  	 };
 
-	  	 $scope.showNewAppointmentForm = function(){
+	  	 $scope.showNewAppointmentForm = function( appmtDate ){
 	  		   $scope.appointmentFormVisible = true;
 
 	  		   $scope.currentAppointment = {
@@ -60,22 +68,43 @@ angular.module('hl7appointmentApp')
 					sourceUid: 'a1f48367-48c3-405f-9283-9b8ad88295af',
 					messageType: 'S12',
 					sch: {
-						placerAppointmentID: Math.random() * (999999999 - 1) + 1
+						placerAppointmentID: Math.random() * (999999999 - 1) + 1,
+						appointmentDate: appmtDate._d
 					},
 					patient: {
-
+						lastName: 'DEVELOPPER'
 					},
-					isSavedOnServer: false
+					pv1: {
+						assignedPatientLocation: {
+							department: 'HDPS_APPLICATION_UNIQUE_ID'
+						},
+						referringDoctor: {
+							
+						}
+					},
+					isPersisted: false
 			   };
+			   
+			   setTimeout(function(){
+	  		   		angular.element('#apptmDate').val( appmtDate._i );
+	  		   }, 100);
 	  	 };
 
 	  	 $scope.hideAppointmentForm = function(){
 	  		   $scope.appointmentFormVisible = false;
 	  	 };
+	  	 
+	  	 $scope.deleteCurrentAppointment = function(){
+	  	 	   
+	  	 };
 
-	  	 $scope.saveAppointment = function(){
-	  		   if( appmtForm.$invalid ) return;
-
-	  		   $scope.appointmentsEvtSources.events.push( $scope.currentAppointment );
+	  	 $scope.saveCurrentAppointment = function(){
+	  		   if( $scope.appmtForm.$invalid ) return;
+	  		   
+	  		   var apptDate = $scope.currentAppointment.sch.appointmentDate;
+	  		   var startDate = JSON.stringify(apptDate).replace(/"/, '').substr(0, 10); //date format: 'yyyy-mm-dd'
+			   var endDate = startDate;
+			   
+			   $scope.appointmentsEvtSources.events.push( {appointment: $scope.currentAppointment, title: $scope.currentAppointment.patient.code, start: startDate, end: endDate} );
 	  	 };
   });
