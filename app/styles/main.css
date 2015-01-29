@@ -9,13 +9,31 @@ body {
 	margin: auto;
 }
 
+.hl7-appointment .main-title
+{
+	font-size: 16px;
+	padding-bottom: 5px;
+	border-bottom: thin solid gray;
+	width: 100%;
+	margin-bottom: 10px;
+}
+
 .appointments-calendar
 {
-	margin-top: 10px;
 	width: 100%;
 }
 
 .appointments-calendar table tr td > div
 {
 	min-height: 50px !important;
+}
+
+.appointments-calendar .appointment-calendar-item
+{
+	background-color: #BFD8EF;
+	border: thin solid #41719C;
+	color: black;
+	padding: 5px 3px;
+	cursor: pointer;
+	margin-top: 3px;
 }

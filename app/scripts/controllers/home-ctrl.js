@@ -12,10 +12,11 @@ angular.module('hl7appointmentApp')
 	     $scope.appointmentsEvtSources = [
 	         {
 	              overlap: false,
-	              className: ['sales-calendar-item']
+	              className: ['appointment-calendar-item'],
+	              events: []
 	         }
 	     ];
-	  
+
 	  	 $scope.calConfig = {
 				editable: false,
 			    header:{
@@ -24,10 +25,21 @@ angular.module('hl7appointmentApp')
 			         right: 'next'
 			    },
 			    eventClick: function(calEvent, jsEvent, view) {
-				    $location.path( '/admin/sale/' + calEvent.saleId );
+					var appmt;
+					for( var i = 0 ; i < $scope.appointmentsEvtSources.events ; i++ )
+					{
+						appmt = $scope.appointmentsEvtSources.events[i];
+						if( appmt == calEvent.appointment )
+						{
+							$scope.currentAppointment = appmt;
+							break;
+						}
+					}
+
+				    $scope.showAppointmentForm();
 				},
-				eventRender: function( event, element, view ) { 
-			        
+				dayClick: function( date, jsEvent, view ) {
+					$scope.showNewAppointmentForm();
 			    },
 				viewRender: function(view, element ){ //need to refresh eventSources when doing prev/next month
 					if( !$scope.sales ) return;
@@ -35,4 +47,35 @@ angular.module('hl7appointmentApp')
 					buildSalesEvents();
 				}
 		 };
+
+	  	 $scope.showAppointmentForm = function(){
+	  		   $scope.appointmentFormVisible = true;
+	  	 };
+
+	  	 $scope.showNewAppointmentForm = function(){
+	  		   $scope.appointmentFormVisible = true;
+
+	  		   $scope.currentAppointment = {
+				    uid: null,
+					sourceUid: 'a1f48367-48c3-405f-9283-9b8ad88295af',
+					messageType: 'S12',
+					sch: {
+						placerAppointmentID: Math.random() * (999999999 - 1) + 1
+					},
+					patient: {
+
+					},
+					isSavedOnServer: false
+			   };
+	  	 };
+
+	  	 $scope.hideAppointmentForm = function(){
+	  		   $scope.appointmentFormVisible = false;
+	  	 };
+
+	  	 $scope.saveAppointment = function(){
+	  		   if( appmtForm.$invalid ) return;
+
+	  		   $scope.appointmentsEvtSources.events.push( $scope.currentAppointment );
+	  	 };
   });
