@@ -1,7 +1,7 @@
-<form name="appmtForm" class="appointment-form">
+<form name="forms.appmtForm" class="appointment-form">
 	<div class="form-group">
 		<label>&nbsp;</label>
-		<h4>{{currentAppointment.isPersisted ? 'Update appointment' : 'New appointment'}}</h4>
+		<h4>{{currentAppointment.isSaved ? 'Update appointment' : 'New appointment'}}</h4>
 	</div>
 	<div class="form-group" style="margin-top: 5px">
 		<label>Duration (Minutes)</label>
@@ -12,21 +12,22 @@
 		<input id="apptmDate" type="text" class="form-control" ng-model="currentAppointment.sch.appointmentDate" datepicker/>
 	</div>
 	<div class="form-group">
-		<label>Code</label>
+		<label>Time</label>
+		<input type="time" class="form-control" ng-model="currentAppointment.sch.appointmentTime" required/>
+	</div>	
+	<div class="form-group">
+		<label>Patient Code</label>
 		<input type="text" class="form-control" ng-model="currentAppointment.patient.code" required/>
 	</div>
 	<div class="form-group">
-		<label>Provider ID</label>
-		<input type="text" class="form-control" ng-model="currentAppointment.pv1.referringDoctor.providerID" required/>
-	</div>
-	<div class="form-group">
-		<label>Name</label>
-		<input type="text" class="form-control" ng-model="currentAppointment.pv1.referringDoctor.name"/>
+		<label>Referring Doctor Name</label>
+		<input type="text" class="form-control" ng-model="currentAppointment.pv1.attendingDoctor.name"/>
 	</div>
 	<div class="form-group">
 		<label></label>
-		<input type="button" class="btn btn-default" value="Cancel" ng-click="hideAppointmentForm()"/>
+		<input type="button" class="btn btn-default" value="Cancel" ng-click="cancelAppointmentUpdate()"/>
 		<input type="button" class="btn btn-danger" style="margin-left: 5px" value="Delete" ng-click="deleteCurrentAppointment()"/>
-		<input type="button" class="btn btn-primary" style="margin-left: 5px" value="Save" ng-click="saveCurrentAppointment()"/>
+		<input type="button" class="btn btn-primary" style="margin-left: 5px" value="Save"
+			   ng-disabled="forms.appmtForm.$invalid" ng-click="saveCurrentAppointment()"/>
 	</div>	
 </form>

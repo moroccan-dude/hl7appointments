@@ -1,8 +1,17 @@
 <div class="hl7-appointment">
 	<h3 class="main-title">HL7 Appointments</h3>
-	
-	<div class="appointments-calendar" ui-calendar="calConfig" calendar="appmtCalendar" ng-model="appointmentsEvtSources"
-		 ng-hide="appointmentFormVisible"></div>
-	
+
+	<div ng-if="!appointmentFormVisible">
+		<div class="appointments-calendar" ui-calendar="calConfig" calendar="appmtCalendar" ng-model="appointmentsEvtSources"></div>
+		<div style="margin-top: 5px; text-align: right; margin-bottom: 5px">
+			<input type="button" class="btn btn-primary" value="Synchronize" ng-disabled="appointmentsEvtSources[0].events.length==0" ng-click="postAppointments()" />
+		</div>
+
+		<div class="alert alert-success" ng-show="errors.savingSuccess">Appointments saved successfully</div>
+		<div class="alert alert-danger" ng-show="errors.savingError">Can not save appointments</div>
+
+		<textarea rows="30" cols="70" ng-show="appointmentsJson">{{appointmentsJson}}</textarea>
+	</div>
+
 	<div src="'views/appointment.html'" ng-if="appointmentFormVisible" ng-include></div>
 </div>

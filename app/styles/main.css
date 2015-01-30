@@ -59,6 +59,7 @@ body {
 	font-weight: normal;
 	width: 150px;
 	font-size: 16px;
+	vertical-align: middle;
 }
 
 .hl7-appointment .appointment-form h4
