@@ -4,11 +4,18 @@
 	<div ng-if="!appointmentFormVisible">
 		<div class="appointments-calendar" ui-calendar="calConfig" calendar="appmtCalendar" ng-model="appointmentsEvtSources"></div>
 		<div style="margin-top: 5px; text-align: right; margin-bottom: 5px">
-			<input type="button" class="btn btn-primary" value="Synchronize" ng-disabled="appointmentsEvtSources[0].events.length==0" ng-click="postAppointments()" />
+			<form class="form-inline">
+				<div class="form-group">
+					<input type="text" class="form-control" style="width: 500px; display: inline-block;" placeholder="URL" ng-model="postOptions.url"/>
+					<input type="text" class="form-control" style="width: 120px; display: inline-block;" placeholder="USERNAME" ng-model="postOptions.username"/>
+					<input type="password" class="form-control" style="width: 120px; display: inline-block;" placeholder="PASSWORD" ng-model="postOptions.password"/>
+					<input type="button" class="btn btn-primary" value="Synchronize" ng-disabled="appointmentsEvtSources[0].events.length==0" ng-click="postAppointments()" />
+				</div>
+			</form>
 		</div>
 
-		<div class="alert alert-success" ng-show="errors.savingSuccess">Appointments saved successfully</div>
-		<div class="alert alert-danger" ng-show="errors.savingError">Can not save appointments</div>
+		<div class="alert alert-success" ng-show="messages.savingSuccess">Appointments saved successfully</div>
+		<div class="alert alert-danger" ng-show="messages.savingError">{{messages.savingError}}</div>
 
 		<textarea rows="30" cols="70" ng-show="appointmentsJson">{{appointmentsJson}}</textarea>
 	</div>

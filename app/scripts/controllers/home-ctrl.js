@@ -13,9 +13,11 @@ angular.module('hl7appointmentApp')
 	  	 var UPDATE_APPMT_STATUS = 'S13';
 	  	 var DELETE_APPMT_STATUS = 'S14';
 
+	  	 $scope.postOptions = {url: 'http://192.168.1.22:8080/hl7broker/router/incoming/format/hl7v2'};
+
 	  	 $scope.forms = { appmtForm: {} };
 
-	  	 $scope.errors = {};
+	  	 $scope.messages = {};
 
 	     $scope.appointmentsEvtSources = [
 	         {
@@ -85,8 +87,8 @@ angular.module('hl7appointmentApp')
 	  	 };
 
 	  	 $scope.showNewAppointmentForm = function( appmtDate ){
-	  		   $scope.errors.savingSuccess = false;
-	  		   $scope.errors.savingError = false;
+	  		   $scope.messages.savingSuccess = false;
+	  		   $scope.messages.savingError = false;
 	  		   $scope.currentAppointmentOrig = undefined;
 
 	  		   $scope.appointmentFormVisible = true;
@@ -94,27 +96,31 @@ angular.module('hl7appointmentApp')
 	  		   var randomId = Math.floor(Math.random() * (999999999 - 1) + 1);
 
 	  		   $scope.currentAppointment = {
+				    uid: null,
 					sourceUid: 'a1f48367-48c3-405f-9283-9b8ad88295af',
 					messageType: CREATE_APPMT_STATUS,
 					sch: {
 						placerAppointmentID: randomId,
+						appointmentDurationUnits: 'MIN',
 						appointmentDate: appmtDate._d
 					},
 					patient: {
-						id: 30,
-						lastName: 'DEVELOPPER'
-					},
-					pv1: {
-						assignedPatientLocation: {
-							department: 'Service d\u0027h\u00e9patologie de l\u0027h\u00f4pital Saint-Pierre'
+						pid: {
+							id: 30,
+							lastName: 'DEVELOPPER'
 						},
-						attendingDoctor: {
-							providerID: 0
+						pv1: {
+							assignedPatientLocation: {
+								department: 'Service d\u0027h\u00e9patologie de l\u0027h\u00f4pital Saint-Pierre'
+							},
+							attendingDoctor: {
+								providerID: 0
+							},
+							visitNumber: randomId
 						},
-						visitNumber: randomId
-					},
-					pv2: {
+						pv2: {
 
+						}
 					},
 					isPersisted: false, /* already saved on server */
 					isSaved: false /* if added to appointment list : see $scope.saveCurrentAppointment*/
@@ -184,16 +190,12 @@ angular.module('hl7appointmentApp')
 	  		   if( $scope.forms.appmtForm.$invalid ) return;
 
 	  		   var apptDate = $scope.currentAppointment.sch.appointmentDate;
-	  		   var startDate = JSON.stringify(apptDate).replace(/"/, '').substr(0, 10); //date format: 'yyyy-mm-dd'
+	  		   var startDate = moment(apptDate).format( 'YYYY-MM-DD' );
 			   var endDate = startDate;
 			   var appmtTime = moment($scope.currentAppointment.sch.appointmentTime).format( 'HH:mm' );
-			   var eventTitle = 'Patient ' + $scope.currentAppointment.patient.code + '\nAt ' + appmtTime;
+			   var eventTitle = 'Patient ' + $scope.currentAppointment.patient.pid.code + '\nAt ' + appmtTime;
 
-			   if( $scope.currentAppointment.isPersisted )
-			   {
-				   $scope.currentAppointment.messageType = UPDATE_APPMT_STATUS;
-			   }
-			   else if( !$scope.currentAppointment.isSaved )
+			   if( !$scope.currentAppointment.isSaved )
 			   {
 			   	  var evt = buildEvent( $scope.currentAppointment );
 			   	  $scope.currentAppointment.isSaved = true;
@@ -201,6 +203,11 @@ angular.module('hl7appointmentApp')
 		   	   }
 		   	   else
 		   	   {
+					if( $scope.currentAppointment.isPersisted )
+					{
+						$scope.currentAppointment.messageType = UPDATE_APPMT_STATUS;
+			   		}
+
 					var events = $scope.appointmentsEvtSources[0].events;
 					var evt
 					for( var i = 0 ; i < events.length ; i++ )
@@ -217,6 +224,8 @@ angular.module('hl7appointmentApp')
 			   }
 
 			   $scope.moveCalendarToDate = startDate;
+
+			   angular.element('.appointments-calendar').fullCalendar( 'refetchEvents' );
 
 			   $scope.hideAppointmentForm();
 	  	 };
@@ -239,8 +248,8 @@ angular.module('hl7appointmentApp')
 		};
 
 		$scope.postAppointments = function(){
-				$scope.errors.savingSuccess = false;
-				$scope.errors.savingError = false;
+				$scope.messages.savingSuccess = false;
+				$scope.messages.savingError = false;
 
 				var events = $scope.appointmentsEvtSources[0].events;
 				var apptm, apptmTemp, appointments = [];
@@ -252,7 +261,8 @@ angular.module('hl7appointmentApp')
 					expectedAdmitDate = moment(apptm.sch.appointmentDate).set({'hour': apptm.sch.appointmentTime.getHours(), 'minute': apptm.sch.appointmentTime.getMinutes()}).add('minutes', apptm.sch.appointmentDuration).format( 'YYYYMMDDHHmm' );
 					apptmTemp = angular.copy( apptm );
 					apptmTemp.sch.appointmentTimingQuantity = apptmDatTime;
-					apptmTemp.pv2.expectedAdmitDateTime = expectedAdmitDate;
+					apptmTemp.patient.pv2.expectedAdmitDateTime = expectedAdmitDate;
+					//remove custom properties
 					delete apptmTemp.sch.appointmentDate;
 					delete apptmTemp.sch.appointmentTime;
 					delete apptmTemp.isPersisted;
@@ -261,37 +271,69 @@ angular.module('hl7appointmentApp')
 					appointments.push( apptmTemp );
 			    }
 
-			    var headersObj = {
-					'Authorization': 'Basic ' + btoa( 'christian:christian' )
-				};
+				//$scope.appointmentsJson = JSON.stringify(appointments, null, 5);
+				//return;
 
-				$scope.appointmentsJson = JSON.stringify(appointments, null, 5);
-				return;
-
-		    	var postUrl = 'http://ns313632.ovh.net:8090/hdps2';
-				$http.post( postUrl, appointments, {headers: headersObj} ).then(
-					  	function(response){
-					  		if( response.status != 200 )
-					  		{
-					  			console.log("Saving error status: " + response.status);
-					  			$scope.errors.savingError = false;;
-					  			return;
-					  		}
-
-					  		var events = $scope.appointmentsEvtSources[0].events;
-							var apptmDatTime;
-							for( var i = 0 ; i < events.length ; i++ )
-			    			{
-								events[i].isPersisted = true;
-							}
-
-					  		$scope.errors.savingSuccess = true;
-					  	},
-					  	function(error){
-					  		console.log(error.statusText ? error.statusText : 'Unknow error');
-					  		$scope.errors.savingError = true;
-					  	}
-				);
+			    for( var i = 0 ; i < appointments.length ; i++ )
+			    {
+					doAppointmentPost( appointments[i], appointments.length );
+			    }
 		};
+
+		var doAppointmentPost = function(appmt, appointpentsCount){
+			var postResponseCount = 0, postErrors = [];
+
+			var headersObj = {};
+
+			if( $scope.postOptions.username && $scope.postOptions.password )
+			{
+				headersObj['Authorization'] = 'Basic ' + btoa( $scope.postOptions.username + ':' + $scope.postOptions.password );
+			}
+
+			$http.post( $scope.postOptions.url, appmt, {headers: headersObj} ).then(
+					function(response){
+						if( response.status != 200 )
+						{
+							console.error("Appointment saving error: " + response.status + ' for patient ' + appmt.patient.pid.code);
+							postErrors.push( appmt.patient.pid.code );
+						}
+						else
+						{
+							appmt.isPersisted = true;
+							$scope.messages.savingSuccess = true;
+						}
+
+						postResponseCount++;
+						if( postResponseCount == appointpentsCount )
+						{
+							if( postErrors.length > 0)
+							{
+								$scope.messages.savingError = 'POST errors for patient codes: ' + postErrors.join( ' , ' );
+							}
+							else
+							{
+								$scope.messages.savingSuccess = true;
+							}
+						}
+					},
+					function(error){
+						postErrors.push( appmt.patient.pid.code );
+						postResponseCount++;
+						if( postResponseCount == appointpentsCount )
+						{
+							if( postErrors.length > 0)
+							{
+								$scope.messages.savingError = 'POST errors for patient codes: ' + postErrors.join( ' , ' );
+							}
+							else
+							{
+								$scope.messages.savingSuccess = true;
+							}
+						}
+
+						console.error('Appointment saving error for patient ' + appmt.patient.pid.code);
+					}
+			);
+		}; //END doAppointmentPost
    }
   ]);
