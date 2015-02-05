@@ -13,7 +13,7 @@ angular.module('hl7appointmentApp')
 	  	 var UPDATE_APPMT_STATUS = 'S13';
 	  	 var DELETE_APPMT_STATUS = 'S14';
 
-	  	 $scope.postOptions = {url: 'http://192.168.1.22:8080/hl7broker/router/incoming/format/hl7v2'};
+	  	 $scope.postOptions = {url: 'http://localhost:8080/hl7broker/router/incoming/format/HDPSv1'};
 
 	  	 $scope.forms = { appmtForm: {} };
 
@@ -192,7 +192,7 @@ angular.module('hl7appointmentApp')
 	  		   var apptDate = $scope.currentAppointment.sch.appointmentDate;
 	  		   var startDate = moment(apptDate).format( 'YYYY-MM-DD' );
 			   var endDate = startDate;
-			   var appmtTime = moment($scope.currentAppointment.sch.appointmentTime).format( 'HH:mm' );
+			   var appmtTime = moment($scope.currentAppointment.sch.appointmentTime).format( 'hh:mm A' );
 			   var eventTitle = 'Patient ' + $scope.currentAppointment.patient.pid.code + '\nAt ' + appmtTime;
 
 			   if( !$scope.currentAppointment.isSaved )
