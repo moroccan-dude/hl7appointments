@@ -10,8 +10,8 @@
 angular.module('hl7appointmentApp')
   .controller('HomeCtrl', ['$scope', '$http', function ($scope, $http) {
 	  	 var CREATE_APPMT_STATUS = 'S12';
-	  	 var UPDATE_APPMT_STATUS = 'S13';
-	  	 var DELETE_APPMT_STATUS = 'S14';
+	  	 var UPDATE_APPMT_STATUS = 'S14';
+	  	 var DELETE_APPMT_STATUS = 'S15';
 
 	  	 $scope.postOptions = {url: 'http://localhost:8080/hl7broker/router/incoming/format/HDPSv1'};
 
@@ -97,7 +97,7 @@ angular.module('hl7appointmentApp')
 
 	  		   $scope.currentAppointment = {
 				    uid: null,
-					sourceUid: 'a1f48367-48c3-405f-9283-9b8ad88295af',
+					sourceUid: 'b1f48367-48c3-405f-9283-9b8ad88295af',
 					messageType: CREATE_APPMT_STATUS,
 					sch: {
 						placerAppointmentID: randomId,
@@ -271,7 +271,7 @@ angular.module('hl7appointmentApp')
 					appointments.push( apptmTemp );
 			    }
 
-				//$scope.appointmentsJson = JSON.stringify(appointments, null, 5);
+				$scope.appointmentsJson = JSON.stringify(appointments, null, 5);
 				//return;
 
 			    for( var i = 0 ; i < appointments.length ; i++ )
@@ -299,8 +299,17 @@ angular.module('hl7appointmentApp')
 						}
 						else
 						{
-							appmt.isPersisted = true;
 							$scope.messages.savingSuccess = true;
+
+							var events = $scope.appointmentsEvtSources[0].events;
+							for( var i = 0 ; i < events.length ; i++ )
+			    			{
+								if(events[i].appointment.sch.placerAppointmentID==appmt.sch.placerAppointmentID)
+								{
+									events[i].appointment.isPersisted = true;
+									break;
+								}
+							}
 						}
 
 						postResponseCount++;

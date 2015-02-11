@@ -1,1 +1,1 @@
-{"plugins":{"angular":{}},"libs":["browser","ecma5"],"ide":{}}
+{"ide":{},"libs":["ecma5","browser"],"loadEagerly": ["scripts/**/**.js"],"plugins":{"angular":{}}}
