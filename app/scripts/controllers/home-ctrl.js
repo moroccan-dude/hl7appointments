@@ -23,9 +23,14 @@ angular.module('hl7appointmentApp')
 	         {
 	              overlap: false,
 	              className: ['appointment-calendar-item'],
-	              events: []
+	              events: function(start, end, timezone, callback){
+					  var events = refreshAppointmentsEvents();
+					  callback(events);
+	              }
 	         }
 	     ];
+
+	     $scope.events = [];
 
 	  	 $scope.calConfig = {
 				editable: false,
@@ -36,11 +41,11 @@ angular.module('hl7appointmentApp')
 			    },
 			    eventClick: function(calEvent, jsEvent, view) {
 					var appmt;
-					var events = $scope.appointmentsEvtSources[0].events;
+					var events = $scope.events;
 					for( var i = 0 ; i < events.length ; i++ )
 					{
 						appmt = events[i].appointment;
-						if( appmt == calEvent.appointment )
+						if( appmt.sch.placerAppointmentID == calEvent.appointment.sch.placerAppointmentID )
 						{
 							$scope.currentAppointment = appmt;
 							break;
@@ -53,9 +58,6 @@ angular.module('hl7appointmentApp')
 					$scope.showNewAppointmentForm( date );
 			    },
 				viewRender: function(view, element ){ //need to refresh eventSources when doing prev/next month
-					//if( $scope.appointmentsEvtSources[0].events.length == 0 ) return;
-					//refreshAppointmentsEvents();
-
 					if( $scope.moveCalendarToDate )
 					{
 						view.calendar.gotoDate($scope.moveCalendarToDate);
@@ -65,8 +67,17 @@ angular.module('hl7appointmentApp')
 		 };
 
 	  	 var refreshAppointmentsEvents = function(){
-	  		 var events = angular.copy( $scope.appointmentsEvtSources[0].events );
-	  		 $scope.appointmentsEvtSources[0].events = events;
+	  		  var evt, filteredEvents = [];
+			  for( var i = 0 ; i < $scope.events.length ; i++ )
+			  {
+				  evt = $scope.events[i];
+				  if( evt.appointment.messageType != DELETE_APPMT_STATUS )
+				  {
+					  filteredEvents.push( evt );
+				  }
+			  }
+
+			  return filteredEvents;
 	  	 };
 
 	     $scope.getDefaultDatepickerOptions = function( htmlElement ){
@@ -160,10 +171,10 @@ angular.module('hl7appointmentApp')
 	  	 		   if( !$scope.currentAppointment.isPersisted )
 	  	 		   {
 		  	 		   var appmt, delIndex = -1;
-		  	 		   for( var i = 0 ; i < $scope.appointmentsEvtSources[0].events.length ; i++ )
+		  	 		   for( var i = 0 ; i < $scope.events.length ; i++ )
 		  	 		   {
-		  	 			   appmt = $scope.appointmentsEvtSources[0].events[i].appointment;
-		  	 			   if( appmt == $scope.currentAppointment )
+		  	 			   appmt = $scope.events[i].appointment;
+		  	 			   if( appmt.sch.placerAppointmentID == $scope.currentAppointment.sch.placerAppointmentID )
 		  	 			   {
 		  	 				   delIndex = i;
 		  	 				   break;
@@ -172,10 +183,8 @@ angular.module('hl7appointmentApp')
 
 		  	 		   if( delIndex >= 0 )
 		  	 		   {
-		  	 			   $scope.appointmentsEvtSources[0].events.splice( delIndex, 1 );
+		  	 			   $scope.events.splice( delIndex, 1 );
 		  	 		   }
-
-		  	 		   refreshAppointmentsEvents();
 	  	 		   }
 	  	 		   else
 	  	 		   {
@@ -199,7 +208,7 @@ angular.module('hl7appointmentApp')
 			   {
 			   	  var evt = buildEvent( $scope.currentAppointment );
 			   	  $scope.currentAppointment.isSaved = true;
-			   	  $scope.appointmentsEvtSources[0].events.push( {appointment: $scope.currentAppointment, title: eventTitle, start: startDate, end: endDate} );
+			   	  $scope.events.push( evt );
 		   	   }
 		   	   else
 		   	   {
@@ -208,12 +217,12 @@ angular.module('hl7appointmentApp')
 						$scope.currentAppointment.messageType = UPDATE_APPMT_STATUS;
 			   		}
 
-					var events = $scope.appointmentsEvtSources[0].events;
+					var events = $scope.events;
 					var evt
 					for( var i = 0 ; i < events.length ; i++ )
 					{
 						evt = events[i];
-						if( evt.appointment == $scope.currentAppointment )
+						if( evt.appointment.sch.placerAppointmentID == $scope.currentAppointment.sch.placerAppointmentID )
 						{
 							evt.startDate = startDate;
 							evt.endDate = endDate;
@@ -225,7 +234,7 @@ angular.module('hl7appointmentApp')
 
 			   $scope.moveCalendarToDate = startDate;
 
-			   angular.element('.appointments-calendar').fullCalendar( 'refetchEvents' );
+			   //angular.element('.appointments-calendar').fullCalendar( 'refetchEvents' );
 
 			   $scope.hideAppointmentForm();
 	  	 };
@@ -234,8 +243,8 @@ angular.module('hl7appointmentApp')
 	  		   var apptDate = appmt.sch.appointmentDate;
 	  		   var startDate = JSON.stringify(apptDate).replace(/"/, '').substr(0, 10); //date format: 'yyyy-mm-dd'
 			   var endDate = startDate;
-			   var appmtTime = moment(appmt.sch.appointmentTime).format( 'HH:mm' );
-			   var eventTitle = 'Patient Code: ' + appmt.patient.code + '\nAt ' + appmtTime;
+			   var appmtTime = moment(appmt.sch.appointmentTime).format( 'HH:mm A' );
+			   var eventTitle = 'Patient Code: ' + appmt.patient.pid.code + '\nAt ' + appmtTime;
 
 			   appmt.isSaved = true;
 			   if( appmt.isPersisted )
@@ -243,15 +252,16 @@ angular.module('hl7appointmentApp')
 				   appmt.messageType = UPDATE_APPMT_STATUS;
 			   }
 
-			   var evt = {appointment: $scope.appmt, title: eventTitle, start: startDate, end: endDate};
+			   var evt = {appointment: appmt, title: eventTitle, start: startDate, end: endDate};
 			   return evt;
 		};
 
+	    var postResponseCount = 0, postErrors = [];
 		$scope.postAppointments = function(){
 				$scope.messages.savingSuccess = false;
 				$scope.messages.savingError = false;
 
-				var events = $scope.appointmentsEvtSources[0].events;
+				var events = $scope.events;
 				var apptm, apptmTemp, appointments = [];
 				var apptmDatTime, expectedAdmitDate;
 				for( var i = 0 ; i < events.length ; i++ )
@@ -272,7 +282,6 @@ angular.module('hl7appointmentApp')
 			    }
 
 				$scope.appointmentsJson = JSON.stringify(appointments, null, 5);
-				//return;
 
 			    for( var i = 0 ; i < appointments.length ; i++ )
 			    {
@@ -281,8 +290,6 @@ angular.module('hl7appointmentApp')
 		};
 
 		var doAppointmentPost = function(appmt, appointpentsCount){
-			var postResponseCount = 0, postErrors = [];
-
 			var headersObj = {};
 
 			if( $scope.postOptions.username && $scope.postOptions.password )
@@ -299,9 +306,7 @@ angular.module('hl7appointmentApp')
 						}
 						else
 						{
-							$scope.messages.savingSuccess = true;
-
-							var events = $scope.appointmentsEvtSources[0].events;
+							var events = $scope.events;
 							for( var i = 0 ; i < events.length ; i++ )
 			    			{
 								if(events[i].appointment.sch.placerAppointmentID==appmt.sch.placerAppointmentID)
